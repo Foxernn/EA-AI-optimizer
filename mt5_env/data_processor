@@ -1,0 +1,35 @@
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import talib
+
+class TitanDataProcessor:
+    def __init__(self):
+        self.scaler = StandardScaler()
+        self.required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+    
+    def create_features(self, data):
+        """Generate technical indicators and features"""
+        df = data.copy()
+        
+        # Add technical indicators
+        df['RSI'] = talib.RSI(df['Close'])
+        df['MA20'] = talib.SMA(df['Close'], timeperiod=20)
+        df['MA50'] = talib.SMA(df['Close'], timeperiod=50)
+        df['ATR'] = talib.ATR(df['High'], df['Low'], df['Close'])
+        
+        # Add custom features
+        df['Price_Range'] = df['High'] - df['Low']
+        df['Price_Change'] = df['Close'].pct_change()
+        
+        return df
+    
+    def prepare_training_data(self, data):
+        """Prepare data for model training"""
+        df = data.copy()
+        df = df.dropna()
+        
+        features = ['RSI', 'MA20', 'MA50', 'ATR', 'Price_Range', 'Price_Change']
+        df.loc[:, features] = self.scaler.fit_transform(df[features])
+        
+        return df
